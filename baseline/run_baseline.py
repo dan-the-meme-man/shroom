@@ -4,6 +4,16 @@ model_name_or_path = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
 model_basename = "mistral-7b-instruct-v0.2.Q6_K.gguf"
 model_path = hf_hub_download(repo_id=model_name_or_path, filename=model_basename)
 
+# change paths appropriately
+# make sure the output filename is the same as the reference filename for the scoring program
+path_val_model_aware = "../SHROOM_dev-v2/val.model-aware.v2.json"
+path_val_model_aware_output = "../baseline_outputs/val.model-aware.v2.json"
+
+# change paths appropriately
+# make sure the output filename is the same as the reference filename for the scoring program
+path_val_model_agnostic = "../SHROOM_dev-v2/val.model-agnostic.json"
+path_val_model_agnostic_output = "../baseline_outputs/val.model-agnostic.json"
+
 # This config has been tested on an RTX 3080 (VRAM of 16GB).
 # you might need to tweak with respect to your hardware.
 from llama_cpp import Llama
@@ -17,11 +27,6 @@ lcpp_llm = Llama(
 )
 
 run_on_test = False # whether this baseline system is ran on the test splits or the val splits
-
-# change paths appropriately
-# make sure the output filename is the same as the reference filename for the scoring program
-path_val_model_aware = "SHROOM_dev-v2/val.model-aware.v2.json"
-path_val_model_aware_output = "baseline_outputs/val.model-aware.v2.json" 
 
 from datasets import load_dataset
 import json
@@ -94,11 +99,6 @@ f = open(path_val_model_aware_output, 'w', encoding='utf-8')
 json.dump(output_json, f)
 f.close()
 print("done")
-
-# change paths appropriately
-# make sure the output filename is the same as the reference filename for the scoring program
-path_val_model_agnostic = "SHROOM_dev-v2/val.model-agnostic.json"
-path_val_model_agnostic_output = "baseline_outputs/val.model-agnostic.json"
 
 from datasets import load_dataset
 import json
