@@ -50,6 +50,8 @@ if __name__ == '__main__':
         dev_preds = []
         dev_labels = []
         
+        model_str = f'epoch_{epoch}_lr_{lr}_wd_{wd}_bs_{batch_size}_ml_{max_length}'
+        
         for i, (encoding, target) in enumerate(train_loader):
             
             batch_start = time.time()
@@ -125,8 +127,6 @@ if __name__ == '__main__':
         plt.title(f'Dev Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
-        
-        model_str = f'epoch_{epoch}_lr_{lr}_wd_{wd}_bs_{batch_size}_ml_{max_length}'
         
         if not exists('plots'):
             mkdir('plots')
