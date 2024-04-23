@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 from torch import no_grad, save
 from torch.cuda import is_available
 from torch.optim import AdamW
+from torch.nn.functional import softmax
+from sklearn.metrics import classification_report
 from transformers import BertForNextSentencePrediction
+
 from clf_data_loader import get_data
         
 if __name__ == '__main__':
@@ -42,6 +45,11 @@ if __name__ == '__main__':
         
         model.train()
         
+        train_preds = []
+        train_labels = []
+        dev_preds = []
+        dev_labels = []
+        
         for i, (encoding, target) in enumerate(train_loader):
             
             batch_start = time.time()
@@ -51,6 +59,9 @@ if __name__ == '__main__':
             loss = outputs.loss
             loss.backward()
             optimizer.step()
+            
+            probabilities = softmax(outputs.logits, dim=1)
+            train_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
             
             batch_end = time.time()
 
@@ -74,6 +85,9 @@ if __name__ == '__main__':
                 outputs = model(**encoding.to(device), labels=target.to(device))
                 loss = outputs.loss
                 
+                probabilities = softmax(outputs.logits, dim=1)
+                dev_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
+                
                 batch_end = time.time()
 
                 running_losses_dev.append(loss.item())
@@ -85,6 +99,14 @@ if __name__ == '__main__':
                 msg += f'Average time per batch: '
                 msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times_dev) / len(times_dev)))}'
                 print(msg)
+                
+        if not exists('reports'):
+            mkdir('reports')
+        with open(join('reports', f'report_{model_str}.txt'), 'w+') as f:
+            f.write('Train\n')
+            f.write(classification_report(train_labels, train_preds))
+            f.write('\nDev\n')
+            f.write(classification_report(dev_labels, dev_preds))
             
         epoch_end = time.time()
         
