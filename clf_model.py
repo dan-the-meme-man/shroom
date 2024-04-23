@@ -1,27 +1,14 @@
+import time
 import matplotlib.pyplot as plt
 from torch.cuda import is_available
 from torch.optim import AdamW
 from transformers import BertForNextSentencePrediction
 from clf_data_loader import get_data
-
-# class BertRegressor(Module):
-#     def __init__(self, bert):
-#         super(BertRegressor, self).__init__()
-#         self.bert = bert
-#         for param in self.bert.parameters():
-#             param.requires_grad = False
-#         self.fc = Linear(self.bert.config.hidden_size, 1)
-        
-#     def forward(self, input_ids, token_type_ids, attention_mask):
-#         outputs = self.bert(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
-#         last_hidden_state = outputs.last_hidden_state
-#         cls_token = last_hidden_state[:, 0]
-#         return self.fc(cls_token)
         
 if __name__ == '__main__':
     
     batch_size = 8
-    max_length = 128
+    max_length = 256
     epochs = 3
     
     device = 'cuda' if is_available() else 'cpu'
@@ -31,20 +18,43 @@ if __name__ == '__main__':
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
     
     running_losses = []
+    times = []
+    
+    start = time.time()
     
     for epoch in range(epochs):
+        
+        epoch_start = time.time()
+        
         for i, (encoding, target) in enumerate(train_loader):
+            
+            batch_start = time.time()
             
             optimizer.zero_grad()
             outputs = model(**encoding.to(device), labels=target.to(device))
             loss = outputs.loss
             loss.backward()
             optimizer.step()
+            
+            batch_end = time.time()
 
             running_losses.append(loss.item())
-            msg = f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {running_losses[-1]:.4},'
-            msg += f' Avg Loss: {sum(running_losses) / len(running_losses):.4}'
+            times.append(batch_end - batch_start)
+            
+            msg =  f'Epoch: {epoch + 1}, Batch: {i + 1}/{len(train_loader)}, '
+            msg += f'Loss: {running_losses[-1]:.4}, '
+            msg += f'Avg Loss: {sum(running_losses) / len(running_losses):.4}, '
+            msg += f'Average time per batch: '
+            msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times) / len(times)))}'
             print(msg)
+            
+        epoch_end = time.time()
+        
+        print(f'Epoch {epoch + 1} took {time.strftime("%H:%M:%S", time.gmtime(epoch_end - epoch_start))}.')
+            
+    end = time.time()
+    
+    print(f'Training took {time.strftime("%H:%M:%S", time.gmtime(end - start))}.')
             
 plt.scatter(range(len(running_losses)), running_losses, s=1, c='blue')
 plt.title('Training Loss')
