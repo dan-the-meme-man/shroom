@@ -58,12 +58,14 @@ if __name__ == '__main__':
             
             optimizer.zero_grad()
             outputs = model(**encoding.to(device), labels=target.to(device))
+            
             loss = outputs.loss
             loss.backward()
             optimizer.step()
             
             probabilities = softmax(outputs.logits, dim=1)
             train_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
+            train_labels.extend(target.flatten().tolist())
             
             batch_end = time.time()
 
@@ -89,6 +91,7 @@ if __name__ == '__main__':
                 
                 probabilities = softmax(outputs.logits, dim=1)
                 dev_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
+                dev_labels.extend(target.flatten().tolist())
                 
                 batch_end = time.time()
 
