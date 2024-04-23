@@ -11,7 +11,7 @@ from clf_data_loader import get_data
         
 if __name__ == '__main__':
     
-    overfit = True
+    overfit = False
     batch_size = 8 if not overfit else 2
     max_length = 256 if not overfit else 32
     epochs = 16
@@ -25,6 +25,9 @@ if __name__ == '__main__':
     model = BertForNextSentencePrediction.from_pretrained('bert-base-multilingual-cased')
     model.to(device)
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=wd)
+    
+    print(f'Training with {device}. Using {len(train_loader)} batches of size {batch_size}.')
+    print(f'Overfitting: {overfit}. Max length: {max_length}. Epochs: {epochs}.')
     
     running_losses_train = []
     times_train = []
