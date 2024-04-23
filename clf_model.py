@@ -117,12 +117,16 @@ if __name__ == '__main__':
         
         print(f'Epoch {epoch + 1} took {time.strftime("%H:%M:%S", time.gmtime(epoch_end - epoch_start))}.')
         
+        if not exists('plots'):
+            mkdir('plots')
+        
         plt.figure()
         plt.scatter(range(len(running_losses_train)), running_losses_train, s=2, c='blue', label='train')
         plt.legend()
         plt.title(f'Train Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
+        plt.savefig(join('plots', f'train_loss_{model_str}.png'))
         
         plt.figure()
         plt.scatter(range(len(running_losses_dev)), running_losses_dev, s=2, c='red', label='dev')
@@ -130,10 +134,7 @@ if __name__ == '__main__':
         plt.title(f'Dev Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
-        
-        if not exists('plots'):
-            mkdir('plots')
-        plt.savefig(join('plots', f'loss_{model_str}.png'))
+        plt.savefig(join('plots', f'dev_loss_{model_str}.png'))
         
         if not exists('models'):
             mkdir('models')
