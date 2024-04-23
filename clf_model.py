@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 outputs = model(**encoding.to(device), labels=target.to(device))
                 loss = outputs.loss
                 
-                train_preds.extend(argmax(outputs.logits, dim=1).tolist())
+                dev_preds.extend(argmax(outputs.logits, dim=1).tolist())
                 dev_labels.extend(target.flatten().tolist())
                 
                 batch_end = time.time()
