@@ -91,10 +91,16 @@ if __name__ == '__main__':
         print(f'Epoch {epoch + 1} took {time.strftime("%H:%M:%S", time.gmtime(epoch_end - epoch_start))}.')
         
         plt.figure()
-        plt.scatter(range(len(running_losses_train)), running_losses_train, s=1, c='blue', label='train')
-        plt.scatter(range(len(running_losses_dev)), running_losses_dev, s=1, c='red', label='dev')
+        plt.scatter(range(len(running_losses_train)), running_losses_train, s=2, c='blue', label='train')
         plt.legend()
-        plt.title('Loss')
+        plt.title(f'Train Loss: Epoch {epoch + 1}')
+        plt.xlabel('Batch')
+        plt.ylabel('Loss')
+        
+        plt.figure()
+        plt.scatter(range(len(running_losses_dev)), running_losses_dev, s=2, c='red', label='dev')
+        plt.legend()
+        plt.title(f'Dev Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
         
