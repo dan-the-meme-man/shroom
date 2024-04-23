@@ -124,6 +124,7 @@ if __name__ == '__main__':
         plt.xlabel('Batch')
         plt.ylabel('Loss')
         plt.savefig(join('plots', f'train_loss_{model_str}.png'))
+        plt.close()
         
         plt.figure()
         plt.scatter(range(len(running_losses_dev)), running_losses_dev, s=2, c='red', label='dev')
@@ -132,6 +133,7 @@ if __name__ == '__main__':
         plt.xlabel('Batch')
         plt.ylabel('Loss')
         plt.savefig(join('plots', f'dev_loss_{model_str}.png'))
+        plt.close()
         
         if not exists('models'):
             mkdir('models')
