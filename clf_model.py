@@ -3,10 +3,9 @@ from os import mkdir
 from os.path import join, exists
 import time
 import matplotlib.pyplot as plt
-from torch import no_grad, save
+from torch import no_grad, save, argmax
 from torch.cuda import is_available
 from torch.optim import AdamW
-from torch.nn.functional import argmax
 from sklearn.metrics import classification_report
 from transformers import BertForNextSentencePrediction
 
