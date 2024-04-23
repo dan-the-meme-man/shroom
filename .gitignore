@@ -4,3 +4,5 @@ SHROOM_unlabeled-training-data-v2/
 participant_kit/
 __pycache__/
 solar_out/
+plots/
+models/

@@ -1,5 +1,9 @@
+import logging
+from os import mkdir
+from os.path import join, exists
 import time
 import matplotlib.pyplot as plt
+from torch import no_grad, save
 from torch.cuda import is_available
 from torch.optim import AdamW
 from transformers import BertForNextSentencePrediction
@@ -7,24 +11,33 @@ from clf_data_loader import get_data
         
 if __name__ == '__main__':
     
-    batch_size = 8
-    max_length = 256
-    epochs = 3
+    overfit = True
+    batch_size = 8 if not overfit else 2
+    max_length = 256 if not overfit else 32
+    epochs = 16
+    lr = 2e-5
+    wd = 0.01
+    
+    logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR)
     
     device = 'cuda' if is_available() else 'cpu'
-    train_loader, test_loader = get_data(batch_size, max_length)
+    train_loader, test_loader = get_data(batch_size, max_length, overfit)
     model = BertForNextSentencePrediction.from_pretrained('bert-base-multilingual-cased')
     model.to(device)
-    optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
+    optimizer = AdamW(model.parameters(), lr=lr, weight_decay=wd)
     
-    running_losses = []
-    times = []
+    running_losses_train = []
+    times_train = []
+    running_losses_dev = []
+    times_dev = []
     
     start = time.time()
     
     for epoch in range(epochs):
         
         epoch_start = time.time()
+        
+        model.train()
         
         for i, (encoding, target) in enumerate(train_loader):
             
@@ -38,26 +51,63 @@ if __name__ == '__main__':
             
             batch_end = time.time()
 
-            running_losses.append(loss.item())
-            times.append(batch_end - batch_start)
+            running_losses_train.append(loss.item())
+            times_train.append(batch_end - batch_start)
             
-            msg =  f'Epoch: {epoch + 1}, Batch: {i + 1}/{len(train_loader)}, '
-            msg += f'Loss: {running_losses[-1]:.4}, '
-            msg += f'Avg Loss: {sum(running_losses) / len(running_losses):.4}, '
+            msg =  f'(train) Epoch: {epoch + 1}, Batch: {i + 1}/{len(train_loader)}, '
+            msg += f'Loss: {running_losses_train[-1]:.4}, '
+            msg += f'Avg Loss: {sum(running_losses_train) / len(running_losses_train):.4}, '
             msg += f'Average time per batch: '
-            msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times) / len(times)))}'
+            msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times_train) / len(times_train)))}'
             print(msg)
+        
+        model.eval()
+        
+        with no_grad():
+            for i, (encoding, target) in enumerate(test_loader):
+                
+                batch_start = time.time()
+                
+                outputs = model(**encoding.to(device), labels=target.to(device))
+                loss = outputs.loss
+                
+                batch_end = time.time()
+
+                running_losses_dev.append(loss.item())
+                times_dev.append(batch_end - batch_start)
+                
+                msg =  f'(dev) Epoch: {epoch + 1}, Batch: {i + 1}/{len(test_loader)}, '
+                msg += f'Loss: {running_losses_dev[-1]:.4}, '
+                msg += f'Avg Loss: {sum(running_losses_dev) / len(running_losses_dev):.4}, '
+                msg += f'Average time per batch: '
+                msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times_dev) / len(times_dev)))}'
+                print(msg)
             
         epoch_end = time.time()
         
         print(f'Epoch {epoch + 1} took {time.strftime("%H:%M:%S", time.gmtime(epoch_end - epoch_start))}.')
-            
+        
+        plt.figure()
+        plt.scatter(range(len(running_losses_train)), running_losses_train, s=1, c='blue', label='train')
+        plt.scatter(range(len(running_losses_dev)), running_losses_dev, s=1, c='red', label='dev')
+        plt.legend()
+        plt.title('Loss')
+        plt.xlabel('Batch')
+        plt.ylabel('Loss')
+        
+        model_str = f'epoch_{epoch}_lr_{lr}_wd_{wd}_bs_{batch_size}_ml_{max_length}'
+        
+        if not exists('plots'):
+            mkdir('plots')
+        plt.savefig(join('plots', f'loss_{model_str}.png'))
+        
+        if not exists('models'):
+            mkdir('models')
+        save(
+            {'model': model.state_dict(), 'optimizer': optimizer.state_dict()},
+            join('models', f'model_{model_str}.pt')
+        )
+        
     end = time.time()
     
     print(f'Training took {time.strftime("%H:%M:%S", time.gmtime(end - start))}.')
-            
-plt.scatter(range(len(running_losses)), running_losses, s=1, c='blue')
-plt.title('Training Loss')
-plt.xlabel('Batch')
-plt.ylabel('Loss')
-plt.savefig('training_loss.png')

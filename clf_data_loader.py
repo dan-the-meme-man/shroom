@@ -47,7 +47,7 @@ class SHROOMDataset(Dataset):
         
         return encoding, target
 
-def get_data(batch_size=8, max_length=128):
+def get_data(batch_size=8, max_length=128, overfit=False):
     df_agnostic = pd.read_json(os.path.join('SHROOM_dev-v2', 'val.model-agnostic.json'))
     df_aware = pd.read_json(os.path.join('SHROOM_dev-v2', 'val.model-aware.v2.json'))
     
@@ -66,6 +66,10 @@ def get_data(batch_size=8, max_length=128):
     df.drop(columns=['label'], inplace=True)
 
     train, test = train_test_split(df, test_size=0.05, random_state=42)
+    
+    if overfit:
+        train = train.iloc[:10]
+        test = train.iloc[:10]
     
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
     
