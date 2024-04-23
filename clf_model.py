@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from torch import no_grad, save
 from torch.cuda import is_available
 from torch.optim import AdamW
-from torch.nn.functional import softmax
+from torch.nn.functional import argmax
 from sklearn.metrics import classification_report
 from transformers import BertForNextSentencePrediction
 
@@ -58,13 +58,12 @@ if __name__ == '__main__':
             
             optimizer.zero_grad()
             outputs = model(**encoding.to(device), labels=target.to(device))
-            
+
             loss = outputs.loss
             loss.backward()
             optimizer.step()
             
-            probabilities = softmax(outputs.logits, dim=1)
-            train_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
+            train_preds.extend(argmax(outputs.logits, dim=1).tolist())
             train_labels.extend(target.flatten().tolist())
             
             batch_end = time.time()
@@ -89,8 +88,7 @@ if __name__ == '__main__':
                 outputs = model(**encoding.to(device), labels=target.to(device))
                 loss = outputs.loss
                 
-                probabilities = softmax(outputs.logits, dim=1)
-                dev_preds.extend((probabilities[:, 0] >  0.5).int().flatten().tolist())
+                train_preds.extend(argmax(outputs.logits, dim=1).tolist())
                 dev_labels.extend(target.flatten().tolist())
                 
                 batch_end = time.time()
