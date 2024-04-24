@@ -1,7 +1,9 @@
+import time
 import logging
 from os import mkdir
 from os.path import join, exists
-import time
+from itertools import product
+
 import matplotlib.pyplot as plt
 from torch import no_grad, save, argmax
 from torch.cuda import is_available
@@ -11,14 +13,13 @@ from transformers import BertForNextSentencePrediction
 
 from clf_data_loader import get_data
         
-if __name__ == '__main__':
-    
-    overfit = False
-    batch_size = 8 if not overfit else 2
-    max_length = 256 if not overfit else 32
-    epochs = 16
-    lr = 2e-5
-    wd = 0.01
+def main(batch_size, lr, wd, overfit=False):
+
+    epochs     = 16         if not overfit else 16
+    max_length = 512        if not overfit else 32
+    batch_size = batch_size if not overfit else 2
+    lr         = lr         if not overfit else 2e-5
+    wd         = wd         if not overfit else 0.01
     
     logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR)
     
@@ -101,14 +102,17 @@ if __name__ == '__main__':
                 msg += f'Average time per batch: '
                 msg += f'{time.strftime("%H:%M:%S", time.gmtime(sum(times_dev) / len(times_dev)))}'
                 print(msg)
-                
+        
+        train_clf_report = classification_report(train_labels, train_preds, output_dict=True)
+        dev_clf_report = classification_report(dev_labels, dev_preds, output_dict=True)
+        
         if not exists('reports'):
             mkdir('reports')
         with open(join('reports', f'report_{model_str}.txt'), 'w+') as f:
             f.write('Train\n')
             f.write(classification_report(train_labels, train_preds))
             f.write('\nDev\n')
-            f.write(classification_report(dev_labels, dev_preds))
+            f.write(classification_report(train_labels, train_preds))
             
         epoch_end = time.time()
         
@@ -145,3 +149,71 @@ if __name__ == '__main__':
     end = time.time()
     
     print(f'Training took {time.strftime("%H:%M:%S", time.gmtime(end - start))}.')
+    
+    return train_clf_report, dev_clf_report, epoch
+    
+if __name__ == '__main__':
+    
+    overfit = True
+    
+    hparam_grid = {
+        'batch_size': [1, 8, 16],
+        'lr': [2e-5, 2e-4, 2e-3],
+        'wd': [1e-4, 1e-3, 1e-2]
+    }
+    
+    best_hparams_by_metric = dict.fromkeys(
+        ('weighted_f1', 'weighted_precision', 'weighted_recall', 'accuracy')
+    )
+    for key in best_hparams_by_metric:
+        best_hparams_by_metric[key] = dict.fromkeys(('batch_size', 'lr', 'wd', 'epoch'))
+        
+    best_metric_values = dict.fromkeys(
+        ('weighted_f1', 'weighted_precision', 'weighted_recall', 'accuracy')
+    )
+    for key in best_metric_values:
+        best_metric_values[key] = 0.0
+    
+    for batch_size, lr, wd in product(*hparam_grid.values()):
+        
+        train_clf_report, dev_clf_report, epoch = main(batch_size, lr, wd, overfit)
+        
+        weighted_f1 = dev_clf_report['weighted avg']['f1-score']
+        weighted_precision = dev_clf_report['weighted avg']['precision']
+        weighted_recall = dev_clf_report['weighted avg']['recall']
+        accuracy = dev_clf_report['accuracy']
+        
+        if weighted_f1 > best_metric_values['weighted_f1']:
+            best_metric_values['weighted_f1'] = weighted_f1
+            best_hparams_by_metric['weighted_f1']['batch_size'] = batch_size
+            best_hparams_by_metric['weighted_f1']['lr'] = lr
+            best_hparams_by_metric['weighted_f1']['wd'] = wd
+            best_hparams_by_metric['weighted_f1']['epoch'] = epoch
+        
+        if weighted_precision > best_metric_values['weighted_precision']:
+            best_metric_values['weighted_precision'] = weighted_precision
+            best_hparams_by_metric['weighted_precision']['batch_size'] = batch_size
+            best_hparams_by_metric['weighted_precision']['lr'] = lr
+            best_hparams_by_metric['weighted_precision']['wd'] = wd
+            best_hparams_by_metric['weighted_precision']['epoch'] = epoch
+            
+        if weighted_recall > best_metric_values['weighted_recall']:
+            best_metric_values['weighted_recall'] = weighted_recall
+            best_hparams_by_metric['weighted_recall']['batch_size'] = batch_size
+            best_hparams_by_metric['weighted_recall']['lr'] = lr
+            best_hparams_by_metric['weighted_recall']['wd'] = wd
+            best_hparams_by_metric['weighted_recall']['epoch'] = epoch
+            
+        if accuracy > best_metric_values['accuracy']:
+            best_metric_values['accuracy'] = accuracy
+            best_hparams_by_metric['accuracy']['batch_size'] = batch_size
+            best_hparams_by_metric['accuracy']['lr'] = lr
+            best_hparams_by_metric['accuracy']['wd'] = wd
+            best_hparams_by_metric['accuracy']['epoch'] = epoch
+        
+        print('Best hyperparameters by metric:')
+        for k in best_hparams_by_metric:
+            print(f'{k}: {best_hparams_by_metric[k]}, {best_metric_values[k]}')
+            
+        if overfit:
+            break
