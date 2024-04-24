@@ -154,7 +154,7 @@ def main(batch_size, lr, wd, overfit=False):
     
 if __name__ == '__main__':
     
-    overfit = True
+    overfit = False
     
     hparam_grid = {
         'batch_size': [1, 8, 16],
