@@ -18,18 +18,7 @@ class SHROOMDataset(Dataset):
     def __getitem__(self, idx):
         src = self.data.iloc[idx]['src']
         hyp = self.data.iloc[idx]['hyp']
-        correct_pred = float(self.data.iloc[idx]['p(Hallucination)'])
-        solar_pred = float(self.data.iloc[idx]['p(Hallucination)_solar'])
-        if correct_pred >= 0.5 and solar_pred >= 0.5:
-            target = tensor([1])
-        elif correct_pred >= 0.5 and solar_pred < 0.5:
-            target = tensor([0])
-        elif correct_pred < 0.5 and solar_pred >= 0.5:
-            target = tensor([0])
-        elif correct_pred < 0.5 and solar_pred < 0.5:
-            target = tensor([1])
-        else:
-            raise ValueError('Invalid target value')
+        label = self.data.iloc[idx]['label']
         
         encoding = self.tokenizer(
             src,
@@ -45,7 +34,7 @@ class SHROOMDataset(Dataset):
         for k in encoding:
             encoding[k] = encoding[k].squeeze()
         
-        return encoding, target
+        return encoding, tensor(label)
 
 def get_data(batch_size=8, max_length=128, overfit=False):
     df_agnostic = pd.read_json(os.path.join('SHROOM_dev-v2', 'val.model-agnostic.json'))
@@ -64,8 +53,10 @@ def get_data(batch_size=8, max_length=128, overfit=False):
     bad_rows = df.loc[(df['p(Hallucination)_solar'] > 0.5) & (df['label'] == 'Not Hallucination')]
     df.drop(bad_rows.index, inplace=True)
     df.drop(columns=['label'], inplace=True)
+    
+    df['label'] = 1 if df['p(Hallucination)'] >= 0.5 and df['p(Hallucination)_solar'] >= 0.5 else 0
 
-    train, test = train_test_split(df, test_size=0.05, random_state=42)
+    train, test = train_test_split(df, test_size=0.05, random_state=42, stratify=df['label'])
     
     if overfit:
         train = train.iloc[:10]
