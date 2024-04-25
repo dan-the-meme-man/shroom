@@ -15,11 +15,11 @@ from clf_data_loader import get_data
         
 def main(batch_size, lr, wd, overfit=False):
 
-    epochs     = 16         if not overfit else 16
+    epochs     = 20         if not overfit else 20
     max_length = 512        if not overfit else 32
-    batch_size = batch_size if not overfit else 2
+    batch_size = batch_size if not overfit else 16
     lr         = lr         if not overfit else 2e-5
-    wd         = wd         if not overfit else 0.01
+    wd         = wd         if not overfit else 1e-4
     
     logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR)
     
@@ -162,9 +162,9 @@ if __name__ == '__main__':
     overfit = False
     
     hparam_grid = {
-        'batch_size': [1, 8, 16],
-        'lr': [2e-5, 2e-4],
-        'wd': [1e-4, 1e-3]
+        'batch_size': [16, 32, 64], # 16
+        'lr': [2e-5, 2e-6, 2e-7], # 2e-5
+        'wd': [1e-4, 1e-5, 1e-6] # 1e-4
     }
     
     best_hparams_by_metric = dict.fromkeys(
