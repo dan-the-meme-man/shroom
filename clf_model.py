@@ -162,7 +162,7 @@ if __name__ == '__main__':
     overfit = False
     
     hparam_grid = {
-        'batch_size': [16, 32, 64], # 16
+        'batch_size': [16], # 16
         'lr': [2e-5, 2e-6, 2e-7], # 2e-5
         'wd': [1e-4, 1e-5, 1e-6] # 1e-4
     }
