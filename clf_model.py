@@ -112,7 +112,7 @@ def main(batch_size, lr, wd, overfit=False):
             f.write('Train\n')
             f.write(classification_report(train_labels, train_preds))
             f.write('\nDev\n')
-            f.write(classification_report(train_labels, train_preds))
+            f.write(classification_report(dev_labels, dev_preds))
             
         epoch_end = time.time()
         
@@ -158,8 +158,8 @@ if __name__ == '__main__':
     
     hparam_grid = {
         'batch_size': [1, 8, 16],
-        'lr': [2e-5, 2e-4, 2e-3],
-        'wd': [1e-4, 1e-3, 1e-2]
+        'lr': [2e-5, 2e-4],
+        'wd': [1e-4, 1e-3]
     }
     
     best_hparams_by_metric = dict.fromkeys(
