@@ -50,7 +50,7 @@ def main(batch_size, lr, wd, overfit=False):
         dev_preds = []
         dev_labels = []
         
-        model_str = f'epoch_{epoch}_lr_{lr}_wd_{wd}_bs_{batch_size}_ml_{max_length}'
+        model_str = f'lr_{lr}_wd_{wd}_bs_{batch_size}_ml_{max_length}'
         
         for i, (encoding, target) in enumerate(train_loader):
             
@@ -108,7 +108,9 @@ def main(batch_size, lr, wd, overfit=False):
         
         if not exists('reports'):
             mkdir('reports')
-        with open(join('reports', f'report_{model_str}.txt'), 'w+') as f:
+        if not exists(join('reports', model_str)):
+            mkdir(join('reports', model_str))
+        with open(join('reports', model_str, f'epoch_{epoch}.txt'), 'w+') as f:
             f.write('Train\n')
             f.write(classification_report(train_labels, train_preds))
             f.write('\nDev\n')
@@ -120,14 +122,15 @@ def main(batch_size, lr, wd, overfit=False):
         
         if not exists('plots'):
             mkdir('plots')
-        
+        if not exists(join('plots', model_str)):
+            mkdir(join('plots', model_str))
         plt.figure()
         plt.scatter(range(len(running_losses_train)), running_losses_train, s=2, c='blue', label='train')
         plt.legend()
         plt.title(f'Train Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
-        plt.savefig(join('plots', f'train_loss_{model_str}.png'))
+        plt.savefig(join('plots', model_str, f'train_loss_epoch_{epoch}.png'))
         plt.close()
         
         plt.figure()
@@ -136,14 +139,16 @@ def main(batch_size, lr, wd, overfit=False):
         plt.title(f'Dev Loss: Epoch {epoch + 1}')
         plt.xlabel('Batch')
         plt.ylabel('Loss')
-        plt.savefig(join('plots', f'dev_loss_{model_str}.png'))
+        plt.savefig(join('plots', model_str, f'dev_loss_epoch_{epoch}.png'))
         plt.close()
         
         if not exists('models'):
             mkdir('models')
+        if not exists(join('models', model_str)):
+            mkdir(join('models', model_str))
         save(
             {'model': model.state_dict(), 'optimizer': optimizer.state_dict()},
-            join('models', f'model_{model_str}.pt')
+            join('models', model_str, f'epoch_{epoch}.pt')
         )
         
     end = time.time()
