@@ -59,9 +59,6 @@ def get_data(batch_size=8, max_length=128, overfit=False):
 
     train, test = train_test_split(df, test_size=0.05, random_state=42, stratify=df['label'])
     
-    print(f'Train size: {len(train)}. Test size: {len(test)}.')
-    exit()
-    
     if overfit:
         train = train.iloc[:10]
         test = train.iloc[:10]
