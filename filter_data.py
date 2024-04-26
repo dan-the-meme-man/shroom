@@ -73,11 +73,11 @@ class DataFilter():
         with torch.no_grad():
             outputs = self.model(**encoding)
             
-            # gives probability for False and True for each item in batch
+            # gives probability for p(incorrect) and p(correct) for each item in a batch
             probs = torch.softmax(outputs.logits, dim=1)
         
-        # return tensor of booleans indicating whether to keep the data item
-        return (probs[:, 1] > self.threshold) | (probs[:, 0] > self.threshold)
+        # if the model is confident one way or the other, return True, otherwise False, as a list of booleans
+        return (probs.max(dim=1).values > self.threshold).tolist()
     
     def filter_in_batches(self, dataset: DataLoader):
         
@@ -91,7 +91,7 @@ class DataFilter():
         keep = []
         
         for i, batch in enumerate(dataset):
-            keep.extend(self.process_batch(batch).tolist())
+            keep.extend(self.process_batch(batch))
             if i % 100 == 0:
                 print(f'Batch {i} processed.')
         
@@ -99,7 +99,7 @@ class DataFilter():
 
 def main():
     
-    batch_size = 8
+    batch_size = 16
     max_length = 512
     
     filters = (
