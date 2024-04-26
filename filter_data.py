@@ -42,7 +42,7 @@ class DataFilter():
         self.threshold = threshold
         self.max_length = max_length
     
-    def process_batch(self, data):
+    def process_batch(self, encoding: dict):
         
         """
         Process a batch of data.
@@ -50,23 +50,6 @@ class DataFilter():
         Args:
             data (pd.DataFrame): Data to process.
         """
-        
-        src = data['src']
-        hyp = data['hyp']
-        
-        encoding = self.tokenizer(
-            src,
-            hyp,
-            add_special_tokens=True,
-            max_length=self.max_length,
-            padding='max_length',
-            return_attention_mask=True,
-            return_tensors='pt',
-            truncation=True
-        )
-        
-        for k in encoding:
-            encoding[k] = encoding[k].squeeze()
             
         probs = None
         
@@ -79,7 +62,7 @@ class DataFilter():
         # if the model is confident one way or the other, return True, otherwise False, as a list of booleans
         return (probs.max(dim=1).values > self.threshold).tolist()
     
-    def filter_in_batches(self, dataset: DataLoader):
+    def filter_in_batches(self, dataloader: DataLoader):
         
         """
         Filter a DataFrame in batches.
@@ -90,7 +73,7 @@ class DataFilter():
         
         keep = []
         
-        for i, batch in enumerate(dataset):
+        for i, batch in enumerate(dataloader):
             keep.extend(self.process_batch(batch))
             if i % 100 == 0:
                 print(f'Batch {i} processed.')
