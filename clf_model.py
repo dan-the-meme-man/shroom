@@ -11,7 +11,7 @@ from torch.optim import AdamW
 from sklearn.metrics import classification_report
 from transformers import BertForNextSentencePrediction
 
-from clf_data_loader import get_data
+from clf_data_loader import get_dev_data, get_train_data
         
 def main(batch_size, lr, wd, overfit=False):
 
@@ -24,7 +24,7 @@ def main(batch_size, lr, wd, overfit=False):
     logging.getLogger("transformers.tokenization_utils_base").setLevel(logging.ERROR)
     
     device = 'cuda' if is_available() else 'cpu'
-    train_loader, test_loader = get_data(batch_size, max_length, overfit)
+    train_loader, test_loader = get_dev_data(batch_size, max_length, overfit)
     model = BertForNextSentencePrediction.from_pretrained('bert-base-multilingual-cased')
     model.to(device)
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=wd)
