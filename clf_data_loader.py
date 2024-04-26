@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from transformers import BertTokenizer
 
 class SHROOMDataset(Dataset):
-    def __init__(self, df, tokenizer, is_dev, max_length=128):
+    def __init__(self, df, tokenizer, is_dev, max_length):
         self.data = df
         self.tokenizer = tokenizer
         self.max_length = max_length
@@ -58,15 +58,17 @@ def get_train_data(batch_size=8, max_length=128, overfit=False, remove_unnecessa
         df_aware.drop(columns=['ref', 'task', 'model', 'tgt'], inplace=True)
         
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    
+    is_dev = False
         
     agnostic_loader = DataLoader(
-        SHROOMDataset(df_agnostic, tokenizer, max_length, is_dev=False),
+        SHROOMDataset(df_agnostic, tokenizer, is_dev, max_length),
         batch_size=batch_size,
         shuffle=False
     )
     
     aware_loader = DataLoader(
-        SHROOMDataset(df_aware, tokenizer, max_length, is_dev=False),
+        SHROOMDataset(df_aware, tokenizer, is_dev, max_length),
         batch_size=batch_size,
         shuffle=False
     )
@@ -102,14 +104,16 @@ def get_dev_data(batch_size=8, max_length=128, overfit=False):
     
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
     
+    is_dev = True
+    
     train_loader = DataLoader(
-        SHROOMDataset(train, tokenizer, max_length, is_dev=True),
+        SHROOMDataset(train, tokenizer, is_dev, max_length),
         batch_size=batch_size,
         shuffle=True
     )
     
     test_loader = DataLoader(
-        SHROOMDataset(test, tokenizer, max_length, is_dev=True),
+        SHROOMDataset(test, tokenizer, is_dev, max_length),
         batch_size=batch_size,
         shuffle=False
     )
