@@ -22,6 +22,9 @@ class SHROOMDataset(Dataset):
         if self.is_dev:
             label = self.data.iloc[idx]['label']
         
+        if src is None:
+            src = ''
+        
         encoding = self.tokenizer(
             src,
             hyp,

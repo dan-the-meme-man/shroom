@@ -68,7 +68,7 @@ class DataFilter():
         Filter a DataFrame in batches.
         
         Args:
-            dataset (SHROOMDataset): Dataset to filter.
+            dataloader (DataLoader): DataLoader to use.
         """
         
         keep = []
