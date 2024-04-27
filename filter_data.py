@@ -75,6 +75,7 @@ class DataFilter():
         
         for i, batch in enumerate(dataloader):
             keep.extend(self.process_batch(batch))
+            print(keep)
             if i % 100 == 0:
                 print(f'Batch {i} processed.')
         
