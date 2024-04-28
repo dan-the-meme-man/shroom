@@ -29,9 +29,9 @@ class DataFilter():
             raise ValueError(msg)
         
         models = (
-            os.path.join('lr_2e-05_wd_0.0001_bs_16_ml_512', 'epoch_0.pt'), # best micro prec
-            os.path.join('lr_2e-05_wd_0.0001_bs_16_ml_512', 'epoch_12.pt'), # best micro f1
-            os.path.join('lr_2e-05_wd_1e-06_bs_16_ml_512', 'epoch_7.pt') # best acc, micro recall
+            os.path.join('lr_2e-05_wd_0.0001_bs_16_ml_512', 'epoch_7.pt'), # best acc, micro recall
+            os.path.join('lr_2e-07_wd_0.0001_bs_16_ml_512', 'epoch_0.pt'), # best micro prec
+            os.path.join('lr_2e-06_wd_0.0001_bs_16_ml_512', 'epoch_13.pt') # best micro f1
         )
         
         print(f'Loading model {models[model_choice]}...')
