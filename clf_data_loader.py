@@ -96,9 +96,9 @@ def get_dev_data(batch_size=8, max_length=128, overfit=False):
     df.drop(bad_rows.index, inplace=True)
     df.drop(columns=['label'], inplace=True)
     
-    df['label'] = (df['p(Hallucination)'] >= 0.5) & (df['p(Hallucination)_solar'] >= 0.5)
-    df['label'] = df['label']
-
+    df['label'] = ((df['p(Hallucination)'] >= 0.5) & (df['p(Hallucination)_solar'] >= 0.5)) | ((df['p(Hallucination)'] < 0.5) & (df['p(Hallucination)_solar'] < 0.5))
+    df['label'] = df['label'].astype(int)
+    
     train, test = train_test_split(df, test_size=0.05, random_state=42, stratify=df['label'])
     
     if overfit:
@@ -122,3 +122,5 @@ def get_dev_data(batch_size=8, max_length=128, overfit=False):
     )
     
     return train_loader, test_loader
+
+#get_dev_data(overfit=True)

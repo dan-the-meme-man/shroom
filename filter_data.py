@@ -63,8 +63,8 @@ class DataFilter():
             # gives probability for p(incorrect) and p(correct) for each item in a batch
             probs = torch.softmax(outputs.logits, dim=1)
         
-        # if the model is confident one way or the other, return True, otherwise False, as a list of booleans
-        return (probs.max(dim=1).values > self.threshold).tolist()
+        # if the model is at least threshold confident about correct, return True, else False
+        return [p[1].item() >= self.threshold for p in probs]
     
     def filter_in_batches(self, dataloader: DataLoader):
         

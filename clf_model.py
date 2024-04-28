@@ -63,8 +63,9 @@ def main(batch_size, lr, wd, overfit=False):
             loss.backward()
             optimizer.step()
             
-            train_preds.extend(argmax(outputs.logits, dim=1).tolist())
-            train_labels.extend(target.flatten().tolist())
+            # 0 means disagree, 1 means agree
+            train_preds.extend(argmax(outputs.logits, dim=1).tolist()) # argmax gives the index of the max value, 0 or 1
+            train_labels.extend(target.flatten().tolist()) # also 0 or 1
             
             batch_end = time.time()
 
