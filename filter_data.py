@@ -8,7 +8,7 @@ from clf_data_loader import get_train_data
 
 class DataFilter():
         
-    def __init__(self, model_choice, threshold=0.6, max_length=512):
+    def __init__(self, model_choice, device, threshold=0.6, max_length=512):
         
         """
         Initialize the DataFilter.
@@ -34,13 +34,17 @@ class DataFilter():
             os.path.join('lr_2e-05_wd_1e-06_bs_16_ml_512', 'epoch_7.pt') # best acc, micro recall
         )
         
+        print(f'Loading model {models[model_choice]}...')
         model = BertForNextSentencePrediction.from_pretrained('bert-base-multilingual-cased')
         model.load_state_dict(torch.load(os.path.join('models', models[model_choice]))['model'])
         model.eval()
         self.model = model
+        self.model.to(device)
+        self.device = device
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
         self.threshold = threshold
         self.max_length = max_length
+        print(f'Model loaded on device {self.device}.')
     
     def process_batch(self, encoding: dict):
         
@@ -54,7 +58,7 @@ class DataFilter():
         probs = None
         
         with torch.no_grad():
-            outputs = self.model(**encoding)
+            outputs = self.model(**encoding.to(self.device))
             
             # gives probability for p(incorrect) and p(correct) for each item in a batch
             probs = torch.softmax(outputs.logits, dim=1)
@@ -86,21 +90,20 @@ def main():
     batch_size = 16
     max_length = 512
     
-    filters = (
-        DataFilter(0, max_length=max_length),
-        DataFilter(1, max_length=max_length),
-        DataFilter(2, max_length=max_length)
-    )
-    
     results = {
         0: {'agnostic': None, 'aware': None},
         1: {'agnostic': None, 'aware': None},
         2: {'agnostic': None, 'aware': None}
     }
     
+    print('Loading data...')
     agnostic_loader, aware_loader = get_train_data(batch_size, max_length, overfit=False, remove_unnecessary_cols=True)
+    print('Data loaded.')
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    for i, filter in enumerate(filters):
+    for i in range(3):
+        filter = DataFilter(i, device, threshold=0.6, max_length=max_length)
         results[i]['agnostic'] = filter.filter_in_batches(agnostic_loader)
         results[i]['aware'] = filter.filter_in_batches(aware_loader)
         
